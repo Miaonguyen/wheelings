@@ -412,11 +412,12 @@ function decodePets(hex){ const ws = words(hex); const a = N(ws, 0) / 32; const 
 const errText = e => { const d = e && (e.data || (e.error && e.error.data)); const sel = typeof d === 'string' ? d.slice(0, 10) : ''; return ERRORS[sel] || (e && e.code === 4001 ? 'Cancelled in the wallet.' : (e && e.message ? e.message.slice(0, 140) : 'Something went wrong.')); };
 
 /* ---------- state ---------- */
-const S = { deployed: false, reach: true, statusErr: 0, feedErr: false, status: null, round: 0, settled: 0, genesis: 0, dur: 600, supply: 0, me: null, myId: 0, board: [], art: new Map(), feed: [], busy: false, lastStatusAt: 0 };
+const S = { deployed: false, reach: true, statusErr: 0, feedErr: false, status: null, round: 0, settled: 0, genesis: 0, dur: 600, supply: 0, me: null, myId: 0, board: [], art: new Map(), artKey: new Map(), checked: false, feed: [], busy: false, lastStatusAt: 0 };
 
 async function loadStatus(){
-  const r = await fetch(API + '/v1/status', { cache: 'no-store' }); if (!r.ok) throw new Error('status');
-  S.status = await r.json(); S.lastStatusAt = Date.now();
+  const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 8000);
+  try { const r = await fetch(API + '/v1/status', { cache: 'no-store', signal: ctl.signal }); if (!r.ok) throw new Error('status');
+    S.status = await r.json(); S.lastStatusAt = Date.now(); } finally { clearTimeout(to); }
 }
 async function checkDeployed(){
   if (!isAddr(WHEELINGS)) { S.reach = true; return false; }
@@ -442,7 +443,7 @@ async function loadBoard(){
   for (let start = 1; start <= S.supply; start += 40) all.push(...decodePets(await call(SEL.pets + pad(start) + pad(40))));
   all.sort((a, b) => b.xp - a.xp || b.bestStreak - a.bestStreak || a.id - b.id);
   S.board = all;
-  for (const p of all.slice(0, 10)) await loadArt(p.id, false);
+  for (const p of all.slice(0, 10)) { const k = [p.xp, p.stage, p.mood, p.golden].join(':'); const grew = S.artKey.get(p.id) !== k; S.artKey.set(p.id, k); await loadArt(p.id, grew); }
 }
 async function loadFeed(){
   if (!S.deployed) return;
@@ -548,7 +549,9 @@ async function sendTx(data, label){
   try { const est = parseInt(await rpc('eth_estimateGas', [{ from: Wal.addr, to: WHEELINGS, data }]), 16); if (est > 0) gas = Math.min(15000000, Math.max(800000, est * 2 + 300000)); } catch {}
   S.busy = true; render();
   try {
-    const hash = await Wal.prov.request({ method: 'eth_sendTransaction', params: [{ from: Wal.addr, to: WHEELINGS, data, value: '0x0', gas: '0x' + gas.toString(16) }] });
+    let chainNow = null; try { chainNow = await Wal.prov.request({ method: 'eth_chainId' }); } catch {}
+    if (String(chainNow).toLowerCase() !== SEPOLIA) { toast('The wallet left Sepolia. Switch back to Sepolia and try again.'); return null; }
+    const hash = await Wal.prov.request({ method: 'eth_sendTransaction', params: [{ from: Wal.addr, to: WHEELINGS, data, value: '0x0', gas: '0x' + gas.toString(16), chainId: SEPOLIA }] });
     if (typeof hash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(hash)) throw new Error('No transaction hash');
     toast(label + ' sent. Waiting for Sepolia…');
     for (let i = 0; i < 60; i++) { await new Promise(r => setTimeout(r, 3000)); let rc = null; try { rc = await rpc('eth_getTransactionReceipt', [hash]); } catch {}
@@ -564,7 +567,7 @@ function render(){
   try { renderNow(); } catch (e) { console.error('render', e); }
 }
 function renderNow(){
-  $('notDeployed').hidden = S.deployed;
+  $('notDeployed').hidden = S.deployed || !S.checked;
   setText('notDeployedTxt', !S.reach ? "Can't reach Sepolia right now; retrying." : 'The Wheelings contract is not deployed on Sepolia yet. The live wheel below already works.');
   const m = S.status && S.status.measurement; const run = isRunning();
   setText('runTxt', S.statusErr > 1 && Date.now() - S.lastStatusAt > 30000 ? 'Wheel status unavailable' : !S.status ? 'Checking the wheel…' : m && m.freshness === 'stale' ? 'Wheel feed stale' : run ? 'Squeektoshi is running' : 'Squeektoshi is resting');
@@ -655,8 +658,9 @@ async function refresh(){
 }
 async function boot(){
   render();
-  try { await loadStatus(); } catch { S.statusErr++; } render();
+  loadStatus().then(() => { S.statusErr = 0; }, () => { S.statusErr++; }).finally(render);   // never blocks startup
   try { S.deployed = await checkDeployed(); } catch { S.deployed = false; }
+  S.checked = true;
   await refresh();
   try { await loadBoard(); } catch {} render();
   try { await loadFeed(); } catch {} render();
