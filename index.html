@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wheelings</title>
+<meta name="description" content="Adopt an on-chain pet that grows on Squeektoshi's real wheel. Cheer it while the hamster runs; SqueekCore on Sepolia decides how much it grows.">
+<meta property="og:title" content="Wheelings">
+<meta property="og:description" content="On-chain pets that grow on Squeektoshi's real wheel. Free on Sepolia.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://wheelings.imd.site/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wheelings.imd.site/og.png">
+<meta name="theme-color" content="#0f1424">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+:root{
+  --ink:#0f1424; --panel:#161d33; --panel-2:#1c2540; --line:#2a3558; --fg:#f1ead9; --muted:#97a2c0;
+  --gold:#ffc861; --ember:#ff7a59; --moss:#7bd389; --sky:#7cc7ff;
+  --f-display:"Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --f-body:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:14px; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--ink);color:var(--fg)}
+body{font-family:var(--f-body);font-size:16px;line-height:1.55;padding:24px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));
+  background:radial-gradient(1200px 600px at 80% -10%,#26305a 0%,transparent 60%),var(--ink)}
+[hidden]{display:none!important}
+a{color:var(--gold)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+header{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end;justify-content:space-between}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(40px,7vw,64px);line-height:1;margin:0;letter-spacing:-.01em}
+h1 i{font-style:normal;color:var(--gold)}
+.tag{color:var(--muted);max-width:560px;margin:8px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--line);border-radius:999px;font-family:var(--f-mono);font-size:12px;background:var(--panel)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.dot.on{background:var(--moss);box-shadow:0 0 10px var(--moss)} .dot.warn{background:var(--gold)} .dot.bad{background:var(--ember)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+.label{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sub{color:var(--muted);margin:6px 0 0}
+.btn{cursor:pointer;border:1px solid var(--line);background:transparent;border-radius:10px;padding:9px 14px;font-size:14px;font-weight:600;transition:transform .12s,border-color .12s,background .12s;text-decoration:none;color:var(--fg);display:inline-flex;align-items:center;gap:8px}
+.btn:hover{border-color:var(--gold)} .btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--gold);border-color:var(--gold);color:#1d1504}
+.btn.big{font-size:18px;padding:14px 22px;border-radius:12px}
+.btn img{border-radius:4px}
+.wallet{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.wallet .wstate{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;flex:1 1 260px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;border:1px solid var(--line);font-family:var(--f-mono);font-size:11px;white-space:nowrap}
+.badge.ok{color:var(--moss);border-color:color-mix(in srgb,var(--moss) 50%,var(--line))}
+.badge.warn{color:var(--gold);border-color:color-mix(in srgb,var(--gold) 50%,var(--line))}
+.badge.bad{color:var(--ember);border-color:color-mix(in srgb,var(--ember) 50%,var(--line))}
+.addr{font-family:var(--f-mono);font-size:13px;color:var(--fg)}
+.home{display:grid;grid-template-columns:minmax(0,420px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:820px){.home{grid-template-columns:minmax(0,1fr)}}
+.petart{aspect-ratio:1;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:#141c33;display:grid;place-items:center;position:relative}
+.petart img{width:100%;height:100%;display:block}
+.petart .ph{color:var(--muted);text-align:center;padding:24px;font-size:14px}
+.petart.cheering::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 60px rgba(255,200,97,.45);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.petart.cheering::after{animation:none}}
+.info h2{font-family:var(--f-display);font-size:34px;margin:4px 0 2px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:16px 0}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+.stat b{display:block;font-family:var(--f-display);font-size:24px;font-weight:600;line-height:1.1;overflow-wrap:anywhere}
+.stat span{font-size:12px;color:var(--muted)}
+.bar{height:10px;border-radius:99px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--ember));width:0;transition:width .6s}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:16px 0 6px}
+.hint{font-size:14px;color:var(--muted);margin:6px 0 0}
+.hint b{color:var(--fg)}
+.queue{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.round{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;font-family:var(--f-mono);font-size:13px;color:var(--muted)}
+.round b{color:var(--fg);font-weight:600}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:14px}
+@media (max-width:760px){.steps{grid-template-columns:minmax(0,1fr)}}
+.step{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:16px}
+.step b{display:block;font-family:var(--f-display);font-size:20px;font-weight:600;margin-bottom:4px}
+.step p{margin:0;color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:400}
+td.num,th.num{text-align:right;font-family:var(--f-mono)}
+tr.me td{background:color-mix(in srgb,var(--gold) 10%,transparent)}
+.thumb{width:44px;height:44px;border-radius:8px;border:1px solid var(--line);display:block;background:#141c33}
+.tablewrap{overflow-x:auto}
+.feed{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.feed li{padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);display:flex;flex-wrap:wrap;gap:4px 12px;justify-content:space-between}
+.feed .t{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.notice{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
+footer{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--muted);font-size:13px;justify-content:space-between}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0b0f1c;border:1px solid var(--gold);padding:10px 16px;border-radius:10px;font-size:14px;max-width:calc(100% - 32px);z-index:5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Wheel<i>ings</i></h1>
+      <p class="tag">Adopt an on-chain pet that grows on Squeektoshi's real wheel. Cheer it while the hamster runs; SqueekCore on Sepolia decides how much it grows.</p>
+    </div>
+    <div class="chips">
+      <span class="chip" aria-live="polite"><span class="dot" id="runDot"></span><span id="runTxt">Checking the wheel…</span></span>
+      <span class="chip"><span class="dot on"></span>Sepolia testnet</span>
+    </div>
+  </header>
+
+  <section class="panel notice" id="notDeployed" hidden>
+    <span class="label">Heads up</span>
+    <p class="sub" id="notDeployedTxt">The Wheelings contract is not deployed on Sepolia yet. The live wheel below already works.</p>
+  </section>
+
+  <section class="panel">
+    <div class="wallet" aria-live="polite"><div class="wbtns" id="wBtns"></div><span class="wstate" id="wState">Checking for a wallet…</span></div>
+  </section>
+
+  <section class="panel home" aria-label="Your Wheeling">
+    <div class="petart" id="petArt"><div class="ph" id="petPh">Your Wheeling appears here.</div></div>
+    <div class="info">
+      <span class="label" id="petEyebrow">Your pet</span>
+      <h2 id="petName">No Wheeling yet</h2>
+      <div id="petSub" class="sub">Connect a wallet to adopt one. It's free on Sepolia, one per wallet, and it stays with you.</div>
+      <div id="petBody" hidden>
+        <div class="stats">
+          <div class="stat"><b id="sXp">0</b><span>XP</span></div>
+          <div class="stat"><b id="sStreak">0</b><span>streak (best <span id="sBest">0</span>)</span></div>
+          <div class="stat"><b id="sHits">0</b><span>runs cheered</span></div>
+          <div class="stat"><b id="sNaps">0</b><span>naps cheered</span></div>
+        </div>
+        <div class="label" id="nextTxt">Next stage</div>
+        <div class="bar" role="progressbar" aria-label="Progress to the next stage" aria-valuemin="0" aria-valuemax="100" id="xpBar"><i id="xpFill"></i></div>
+      </div>
+      <div class="actions" id="actions"></div>
+      <p class="hint" id="cheerHint"></p>
+      <ul class="queue" id="queue" aria-label="Cheered rounds"></ul>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="The wheel right now">
+    <span class="label">The wheel right now</span>
+    <div class="round" style="margin-top:8px"><span>Round <b id="rNow">—</b> ends <b id="rEnd">—</b> UTC</span><span>settled on Sepolia through round <b id="rSettled">—</b></span><span id="rRpm"></span></div>
+    <div class="steps">
+      <div class="step"><b>1 · Adopt</b><p>Free, one per wallet. Your Wheeling is soulbound: it can't be sold or moved, so every pet on the board was raised by its owner.</p></div>
+      <div class="step"><b>2 · Cheer</b><p>While Squeektoshi runs, cheer once per 10-minute round. Cheers wait (up to 24) until SqueekCore settles the round on Sepolia, which can take a few hours.</p></div>
+      <div class="step"><b>3 · Grow</b><p>A settled round where the wheel turned gives XP equal to its real work; back-to-back runs raise it up to ×2. A nap gives nothing. Pets hatch, grow gear and get hungry if left alone.</p></div>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="The board">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline"><span class="label">The board · read straight from the contract</span><span class="label" id="boardCount"></span></div>
+    <div class="tablewrap"><table>
+      <thead><tr><th>#</th><th></th><th>Pet</th><th>Owner</th><th>Stage</th><th class="num">XP</th><th class="num">Best streak</th><th class="num">Runs</th></tr></thead>
+      <tbody id="board"><tr><td colspan="8" class="sub">Loading…</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section class="panel" aria-label="Latest scored rounds">
+    <span class="label">Latest scored rounds · contract events</span>
+    <ul class="feed" id="feed"><li class="sub">Loading…</li></ul>
+  </section>
+
+  <footer>
+    <span id="links">Contract: not deployed yet</span>
+    <span>Reads <a href="https://api.squeekchain.com/v1/status" target="_blank" rel="noopener">api.squeekchain.com</a> and SqueekCore on Sepolia. Testnet only, nothing here has value.</span>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+(() => {
+'use strict';
+/* ---------- configuration ---------- */
+const WHEELINGS = '0x13c421454de930e373647cb45dd35a963c21c0a3';   // the deployed Wheelings contract on Sepolia
+const DEPLOY_BLOCK = 12073396;  // its deployment block (events are read from here)
+const CORE = '0xfd6c166d4b8e2962e65746a13e5a0797cd4de0c4';
+const SEPOLIA = '0xaa36a7';
+const RPCS = ['https://ethereum-sepolia-rpc.publicnode.com', 'https://1rpc.io/sepolia'];
+const API = 'https://api.squeekchain.com';
+const STAGES = ['Egg', 'Pup', 'Runner', 'Champion', 'Legend'], NEXT = [1, 5000, 20000, 60000, Infinity];
+const MOODS = ['Happy', 'Hungry', 'Sleepy'];
+const SEL = { adopt: '0xb0f5d8a4', cheer: '0x372c4297', resolve: '0x4f896d4f', drop: '0x40c79279', currentRound: '0x8a19c8bc', settled: '0x83d0e1d7', totalSupply: '0x18160ddd',
+  petOf: '0xa8379ea2', pet: '0xa07d7972', pets: '0x82438fad', svgOf: '0xe2ae5f13', genesis: '0xa7f0b3de', roundDuration: '0xf7cb789a' };
+const ERRORS = { '0x02899c34': 'This wallet already adopted its Wheeling.', '0xfae5b94c': 'You already cheered this round. Come back next round.', '0x971df169': 'The SqueekCore contract looks wrong.',
+  '0xf6f26ecb': 'SqueekCore returned an unexpected round page; try again later.', '0x0ceb56d2': 'No such Wheeling.', '0x71154edd': 'That Wheeling belongs to another wallet.', '0xa4420a95': 'Wheelings cannot be transferred.',
+  '0x91b2ed49': 'That round is already settled; cheer the round in progress.', '0x1598acd8': '24 cheers are already waiting for settlement. Score them once SqueekCore catches up.', '0xfa1661dc': 'The wheel has not started yet.', '0xec3e46a5': 'Nothing to drop: a cheer can only be dropped a day after its round settled.' };
+const EV_RESOLVED = '0xf3c787e2f2764de9a4960d3cf0be5a976d622e1a7115799c6067f63a48b50c93';
+const EV_CHEERED = '0x95ecc4bfd6727a5e1c9f3991dce8d64b409a314bf3c7b8256b03e2dc960683aa';
+const $ = id => document.getElementById(id);
+const isAddr = a => typeof a === 'string' && /^0x[0-9a-fA-F]{40}$/.test(a);
+const short = a => a.slice(0, 6) + '…' + a.slice(-4);
+const scan = (k, v) => `https://sepolia.etherscan.io/${k}/${v}`;
+const fmt = n => Math.round(n).toLocaleString('en-US');
+const hhmm = ms => { const d = new Date(ms); return String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'); };
+const setText = (id, t) => { const e = $(id); if (e && e.textContent !== t) e.textContent = t; };
+let toastT; const toast = m => { const t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 3200); };
+
+/* ---------- JSON-RPC and ABI ---------- */
+let rpcId = 1;
+async function rpc(method, params){
+  let last = null;
+  for (const u of RPCS) {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 12000);
+    try { const r = await fetch(u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: rpcId++, method, params }), signal: ctl.signal });
+      const j = await r.json(); if (j && 'result' in j) return j.result;
+      if (j && j.error && j.error.data) { const e = new Error(j.error.message || 'reverted'); e.data = typeof j.error.data === 'string' ? j.error.data : j.error.data.data; e.revert = true; throw e; }
+      last = new Error((j && j.error && j.error.message) || 'rpc'); }
+    catch (e) { if (e.revert) throw e; last = e; } finally { clearTimeout(to); }
+  }
+  throw last || new Error('rpc');
+}
+const pad = v => BigInt(v).toString(16).padStart(64, '0');
+const padAddr = a => a.slice(2).toLowerCase().padStart(64, '0');
+const words = hex => { const h = hex.slice(2); const out = []; for (let i = 0; i < h.length; i += 64) out.push(h.slice(i, i + 64)); return out; };
+const W = (ws, i) => BigInt('0x' + (ws[i] || '0'));
+const N = (ws, i) => Number(W(ws, i));
+const call = (data, to = WHEELINGS) => rpc('eth_call', [{ to, data }, 'latest']);
+function decodeString(hex){ const ws = words(hex); const off = N(ws, 0) / 32; const len = N(ws, off); const h = hex.slice(2 + (off + 1) * 64, 2 + (off + 1) * 64 + len * 2);
+  const bytes = new Uint8Array(len); for (let i = 0; i < len; i++) bytes[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16); return new TextDecoder().decode(bytes); }
+// PetView: 16 static words, then an offset to uint64[] pending (relative to the tuple start)
+function decodePetAt(ws, base){
+  const f = i => W(ws, base + i);
+  const pOff = Number(f(16)) / 32; const pLen = Number(W(ws, base + pOff)); const pending = [];
+  for (let i = 0; i < pLen; i++) pending.push(Number(W(ws, base + pOff + 1 + i)));
+  return { id: Number(f(0)), owner: '0x' + ws[base + 1].slice(24), seed: f(2).toString(16), born: Number(f(3)), golden: f(4) === 1n, xp: Number(f(5)), stage: Number(f(6)), mood: Number(f(7)),
+    lastHit: Number(f(8)), bestRound: Number(f(9)), cheers: Number(f(10)), hits: Number(f(11)), naps: Number(f(12)), streak: Number(f(13)), bestStreak: Number(f(14)), lastCheer: Number(f(15)), pending };
+}
+const decodePet = hex => { const ws = words(hex); return decodePetAt(ws, N(ws, 0) / 32); };
+function decodePets(hex){ const ws = words(hex); const a = N(ws, 0) / 32; const n = N(ws, a); const out = [];
+  for (let i = 0; i < n; i++) out.push(decodePetAt(ws, a + 1 + N(ws, a + 1 + i) / 32)); return out; }
+const errText = e => { const d = e && (e.data || (e.error && e.error.data)); const sel = typeof d === 'string' ? d.slice(0, 10) : ''; return ERRORS[sel] || (e && e.code === 4001 ? 'Cancelled in the wallet.' : (e && e.message ? e.message.slice(0, 140) : 'Something went wrong.')); };
+
+/* ---------- state ---------- */
+const S = { deployed: false, reach: true, statusErr: 0, feedErr: false, status: null, round: 0, settled: 0, genesis: 0, dur: 600, supply: 0, me: null, myId: 0, board: [], art: new Map(), feed: [], busy: false, lastStatusAt: 0 };
+
+async function loadStatus(){
+  const r = await fetch(API + '/v1/status', { cache: 'no-store' }); if (!r.ok) throw new Error('status');
+  S.status = await r.json(); S.lastStatusAt = Date.now();
+}
+async function checkDeployed(){
+  if (!isAddr(WHEELINGS)) { S.reach = true; return false; }
+  try { const code = await rpc('eth_getCode', [WHEELINGS, 'latest']); S.reach = true; return typeof code === 'string' && code.length > 4; }
+  catch { S.reach = false; return false; }
+}
+async function loadChain(){
+  if (!S.deployed) { if (!isAddr(WHEELINGS)) return; S.deployed = await checkDeployed(); if (!S.deployed) return; S.lateBoard = true; }
+  const [cr, st, ts] = await Promise.all([call(SEL.currentRound), call(SEL.settled), call(SEL.totalSupply)]);
+  S.round = Number(BigInt(cr)); S.settled = Number(BigInt(st)); S.supply = Number(BigInt(ts));
+  if (!S.genesis) { S.genesis = Number(BigInt(await call(SEL.genesis))); S.dur = Number(BigInt(await call(SEL.roundDuration))) || 600; }
+  if (Wal.addr) { const id = Number(BigInt(await call(SEL.petOf + padAddr(Wal.addr)))); S.myId = id; S.me = id ? decodePet(await call(SEL.pet + pad(id))) : null; if (id) await loadArt(id, true); }
+  else { S.myId = 0; S.me = null; }
+  if (S.lateBoard) { S.lateBoard = false; try { await loadBoard(); await loadFeed(); } catch {} }   // Sepolia came back after a failed first check
+}
+async function loadArt(id, force){
+  if (!force && S.art.has(id)) return;
+  try { const svg = decodeString(await call(SEL.svgOf + pad(id))); const src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); if (S.art.get(id) !== src) S.art.set(id, src); } catch {}
+}
+async function loadBoard(){
+  if (!S.deployed || !S.supply) { S.board = []; return; }
+  const all = [];
+  for (let start = 1; start <= S.supply; start += 40) all.push(...decodePets(await call(SEL.pets + pad(start) + pad(40))));
+  all.sort((a, b) => b.xp - a.xp || b.bestStreak - a.bestStreak || a.id - b.id);
+  S.board = all;
+  for (const p of all.slice(0, 10)) await loadArt(p.id, false);
+}
+async function loadFeed(){
+  if (!S.deployed) return;
+  const head = parseInt(await rpc('eth_blockNumber', []), 16);
+  const logs = []; let to = head; const floor = Math.max(DEPLOY_BLOCK, head - 60000);
+  try {
+    while (to >= floor && logs.length < 12) { const from = Math.max(floor, to - 9999);
+      const part = await rpc('eth_getLogs', [{ address: WHEELINGS, topics: [EV_RESOLVED], fromBlock: '0x' + from.toString(16), toBlock: '0x' + to.toString(16) }]);
+      if (Array.isArray(part)) logs.unshift(...part); to = from - 1; }
+    S.feedErr = false;
+  } catch { S.feedErr = true; return; }
+  S.feed = logs.slice(-12).reverse().map(l => { const d = words(l.data); return { id: Number(BigInt(l.topics[1])), round: Number(BigInt(l.topics[2])), work: N(d, 0), xp: N(d, 1), streak: N(d, 2), tx: l.transactionHash }; });
+}
+
+/* ---------- wallet (any EIP-6963 or injected wallet) ---------- */
+const WKEY = 'wheelings.wallet.v1';
+const Wal = { list: [], prov: null, info: null, addr: null, chain: null, choosing: false, noWallet: false, busy: false, note: '' };
+const bound = new WeakSet();
+window.addEventListener('eip6963:announceProvider', e => { const d = e.detail;
+  if (d && d.provider && typeof d.provider.request === 'function' && d.info && typeof d.info.name === 'string' && !Wal.list.some(p => p.info.uuid === d.info.uuid)) { Wal.list.push(d); renderWallet(); setTimeout(quietReconnect, 0); } });
+try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch {}
+const KNOWN = [['isRabby', 'Rabby', 'io.rabby'], ['isOkxWallet', 'OKX Wallet', 'com.okex.wallet'], ['isOKExWallet', 'OKX Wallet', 'com.okex.wallet'], ['isCoinbaseWallet', 'Coinbase Wallet', 'com.coinbase.wallet'],
+  ['isTrust', 'Trust Wallet', 'com.trustwallet.app'], ['isBitKeep', 'Bitget Wallet', 'com.bitget.web3'], ['isPhantom', 'Phantom', 'app.phantom'], ['isBraveWallet', 'Brave Wallet', 'com.brave.wallet'], ['isMetaMask', 'MetaMask', 'io.metamask']];
+function legacyInfo(pr, name, rdns){ if (!name) { const k = KNOWN.find(([f]) => { try { return pr[f] === true; } catch { return false; } }); name = k ? k[1] : 'Browser wallet'; rdns = k ? k[2] : 'injected'; }
+  return { info: { name, rdns, uuid: 'legacy:' + rdns, icon: '' }, provider: pr }; }
+function wallets(){ const l = Wal.list.slice(); const ok = pr => { try { return !!pr && typeof pr.request === 'function'; } catch { return false; } };
+  const add = w => { if (!ok(w.provider) || l.some(x => x.provider === w.provider || x.info.rdns === w.info.rdns)) return; l.push(w); };
+  try { add(legacyInfo(window.okxwallet, 'OKX Wallet', 'com.okex.wallet')); add(legacyInfo(window.bitkeep && window.bitkeep.ethereum, 'Bitget Wallet', 'com.bitget.web3'));
+    add(legacyInfo(window.trustwallet, 'Trust Wallet', 'com.trustwallet.app')); add(legacyInfo(window.coinbaseWalletExtension, 'Coinbase Wallet', 'com.coinbase.wallet'));
+    const eth = window.ethereum; if (eth && Array.isArray(eth.providers)) for (const pr of eth.providers) add(legacyInfo(pr)); if (eth) add(legacyInfo(eth)); } catch {}
+  return l; }
+function appLinks(){ const url = location.href.split('#')[0]; const e = encodeURIComponent;
+  return [['MetaMask', 'https://metamask.app.link/dapp/' + url.replace(/^https?:\/\//, '')], ['OKX Wallet', 'https://web3.okx.com/download?deeplink=' + e('okx://wallet/dapp/url?dappUrl=' + e(url))],
+    ['Trust Wallet', 'https://link.trustwallet.com/open_url?coin_id=60&url=' + e(url)], ['Coinbase Wallet', 'https://go.cb-w.com/dapp?cb_url=' + e(url)]]; }
+const wget = () => { try { const v = JSON.parse(localStorage.getItem(WKEY) || 'null'); return v && typeof v.rdns === 'string' ? v : null; } catch { return null; } };
+const wset = v => { try { v ? localStorage.setItem(WKEY, JSON.stringify(v)) : localStorage.removeItem(WKEY); } catch {} };
+async function useWallet(w, ask){
+  const pr = w.provider;
+  if (!bound.has(pr) && typeof pr.on === 'function') { bound.add(pr);
+    pr.on('accountsChanged', a => { if (Wal.prov !== pr) return; Wal.addr = Array.isArray(a) && isAddr(a[0]) ? a[0] : null; if (!Wal.addr) wset(null); refresh(); });
+    pr.on('chainChanged', c => { if (Wal.prov !== pr) return; Wal.chain = typeof c === 'string' ? c.toLowerCase() : null; render(); }); }
+  const accts = await pr.request({ method: ask ? 'eth_requestAccounts' : 'eth_accounts' });
+  if (!Array.isArray(accts) || !isAddr(accts[0])) { if (ask) throw new Error('no account'); return false; }
+  Wal.prov = pr; Wal.info = w.info; Wal.addr = accts[0]; Wal.choosing = false; Wal.noWallet = false;
+  try { const c = await pr.request({ method: 'eth_chainId' }); Wal.chain = typeof c === 'string' ? c.toLowerCase() : null; } catch { Wal.chain = null; }
+  wset({ rdns: w.info.rdns || 'injected' }); return true;
+}
+async function connectWallet(w){
+  if (Wal.busy) return; Wal.busy = true; Wal.note = ''; renderWallet();
+  try { await useWallet(w, true); if (Wal.chain !== SEPOLIA) { try { await switchSepolia(); } catch {} } toast(Wal.chain === SEPOLIA ? 'Wallet connected on Sepolia' : 'Connected; switch the wallet to Sepolia to play'); }
+  catch (e) { Wal.note = e && e.code === 4001 ? 'Connection cancelled in the wallet.' : 'The wallet did not connect.'; }
+  finally { Wal.busy = false; refresh(); }
+}
+async function switchSepolia(){
+  if (!Wal.prov) return;
+  try { await Wal.prov.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: SEPOLIA }] }); }
+  catch (e) { if (e && (e.code === 4902 || (e.data && e.data.originalError && e.data.originalError.code === 4902)))
+      await Wal.prov.request({ method: 'wallet_addEthereumChain', params: [{ chainId: SEPOLIA, chainName: 'Sepolia', nativeCurrency: { name: 'Sepolia Ether', symbol: 'ETH', decimals: 18 }, rpcUrls: [RPCS[0]], blockExplorerUrls: ['https://sepolia.etherscan.io'] }] });
+    else if (!(e && e.code === 4001)) throw e; }
+  try { const c = await Wal.prov.request({ method: 'eth_chainId' }); Wal.chain = typeof c === 'string' ? c.toLowerCase() : Wal.chain; } catch {}
+}
+function disconnectWallet(){ const pr = Wal.prov; Wal.prov = null; Wal.info = null; Wal.addr = null; Wal.chain = null; wset(null);
+  try { pr && pr.request({ method: 'wallet_revokePermissions', params: [{ eth_accounts: {} }] }).catch(() => {}); } catch {} refresh(); }
+const tried = new Set();
+async function quietReconnect(){ const saved = wget(); if (!saved || Wal.addr || Wal.busy) return;
+  const w = wallets().find(x => (x.info.rdns || 'injected') === saved.rdns) || (saved.rdns === 'injected' ? wallets()[0] : null);
+  if (!w || tried.has(w.info.uuid)) return; tried.add(w.info.uuid);
+  try { if (await useWallet(w, false)) refresh(); } catch {} }
+setTimeout(() => { quietReconnect(); renderWallet(); }, 600);
+
+function renderWallet(){
+  const btns = $('wBtns'), st = $('wState'); const list = wallets();
+  const sig = [Wal.addr, Wal.chain, Wal.choosing, Wal.noWallet, Wal.busy, Wal.note, Wal.info && Wal.info.name, list.map(w => w.info.uuid).join(',')].join('|');
+  if (btns.dataset.sig === sig) return; btns.dataset.sig = sig; btns.innerHTML = ''; st.innerHTML = '';
+  const btn = (t, f, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = t; b.addEventListener('click', f); btns.appendChild(b); return b; };
+  const span = (t, cls) => { const e = document.createElement('span'); if (cls) e.className = cls; e.textContent = t; st.appendChild(e); return e; };
+  if (!Wal.addr) {
+    if (Wal.choosing && list.length > 1) { for (const w of list) { const b = btn(w.info.name, () => connectWallet(w));
+        if (typeof w.info.icon === 'string' && /^data:image\/(svg\+xml|png|webp|jpeg|gif)[;,]/.test(w.info.icon)) { const im = document.createElement('img'); im.src = w.info.icon; im.alt = ''; im.width = 18; im.height = 18; b.prepend(im); } }
+      btn('Cancel', () => { Wal.choosing = false; renderWallet(); }); span(`${list.length} wallets found. Choose one; it will ask to connect on Sepolia.`); return; }
+    if (Wal.noWallet) { for (const [n, href] of appLinks()) { const a = document.createElement('a'); a.className = 'btn'; a.href = href; a.rel = 'noopener'; a.textContent = 'Open in ' + n; btns.appendChild(a); }
+      btn('Back', () => { Wal.noWallet = false; renderWallet(); });
+      span('No wallet in this browser. On a phone, open Wheelings inside your wallet app; on a computer, install a wallet extension. You can still watch the board.'); return; }
+    const b = btn(Wal.busy ? 'Connecting…' : 'Connect wallet', () => { const l = wallets(); if (!l.length) { Wal.noWallet = true; renderWallet(); return; } if (l.length === 1) connectWallet(l[0]); else { Wal.choosing = true; renderWallet(); } }, 'primary');
+    b.disabled = Wal.busy; span(Wal.note || 'Connect any EVM wallet on Sepolia to adopt and raise your Wheeling. Watching needs no wallet.'); return;
+  }
+  const a = document.createElement('a'); a.className = 'addr'; a.href = scan('address', Wal.addr); a.target = '_blank'; a.rel = 'noopener'; a.textContent = short(Wal.addr); st.appendChild(a);
+  if (Wal.info && Wal.info.name) span(Wal.info.name, 'badge');
+  if (Wal.chain === SEPOLIA) span('Sepolia', 'badge ok'); else { span(Wal.chain ? 'not on Sepolia' : 'network unknown', 'badge warn'); btn('Switch to Sepolia', async () => { try { await switchSepolia(); } catch {} render(); }); }
+  span('Need test ETH? Use any Sepolia faucet.');
+  btn('Disconnect', disconnectWallet);
+}
+
+/* ---------- transactions ---------- */
+async function sendTx(data, label){
+  if (!Wal.addr || !Wal.prov) { toast('Connect a wallet first'); return null; }
+  if (Wal.chain !== SEPOLIA) { try { await switchSepolia(); } catch {} if (Wal.chain !== SEPOLIA) { toast('Switch the wallet to Sepolia first'); return null; } }
+  // simulate first, so a known reason is shown instead of a failed transaction; then leave gas headroom,
+  // because more cheered rounds may settle (and get scored) before the transaction is mined
+  let gas = 600000;
+  try { await rpc('eth_call', [{ from: Wal.addr, to: WHEELINGS, data }, 'latest']); }
+  catch (e) { if (e.revert) { toast(errText(e)); return null; } }
+  try { const est = parseInt(await rpc('eth_estimateGas', [{ from: Wal.addr, to: WHEELINGS, data }]), 16); if (est > 0) gas = Math.min(15000000, Math.max(800000, est * 2 + 300000)); } catch {}
+  S.busy = true; render();
+  try {
+    const hash = await Wal.prov.request({ method: 'eth_sendTransaction', params: [{ from: Wal.addr, to: WHEELINGS, data, value: '0x0', gas: '0x' + gas.toString(16) }] });
+    if (typeof hash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(hash)) throw new Error('No transaction hash');
+    toast(label + ' sent. Waiting for Sepolia…');
+    for (let i = 0; i < 60; i++) { await new Promise(r => setTimeout(r, 3000)); let rc = null; try { rc = await rpc('eth_getTransactionReceipt', [hash]); } catch {}
+      if (rc) { if (rc.status === '0x1') { const ch = (rc.logs || []).find(l => l.topics && l.topics[0] === EV_CHEERED); toast(ch ? `Cheered round ${fmt(Number(BigInt(ch.topics[2])))}` : label + ' confirmed'); setTimeout(async () => { try { await loadBoard(); await loadFeed(); } catch {} render(); }, 0); } else toast(label + ' failed on chain'); return rc; } }
+    toast(label + ' is taking long; check it on Etherscan'); return null;
+  } catch (e) { toast(errText(e)); return null; }
+  finally { S.busy = false; refresh(); }
+}
+
+/* ---------- rendering ---------- */
+const isRunning = () => { const m = S.status && S.status.measurement; return !!m && m.freshness !== 'stale' && Number(m.rpmMilli) > 0; };
+function render(){
+  try { renderNow(); } catch (e) { console.error('render', e); }
+}
+function renderNow(){
+  $('notDeployed').hidden = S.deployed;
+  setText('notDeployedTxt', !S.reach ? "Can't reach Sepolia right now; retrying." : 'The Wheelings contract is not deployed on Sepolia yet. The live wheel below already works.');
+  const m = S.status && S.status.measurement; const run = isRunning();
+  setText('runTxt', S.statusErr > 1 && Date.now() - S.lastStatusAt > 30000 ? 'Wheel status unavailable' : !S.status ? 'Checking the wheel…' : m && m.freshness === 'stale' ? 'Wheel feed stale' : run ? 'Squeektoshi is running' : 'Squeektoshi is resting');
+  $('runDot').className = 'dot ' + (!S.status ? '' : run ? 'on' : m && m.freshness === 'stale' ? 'warn' : '');
+  const g = S.genesis || 1793022600, d = S.dur || 600; const nowRound = Math.floor((Date.now() / 1000 - g) / d) + 1;
+  const round = S.deployed ? Math.max(S.round, nowRound) : nowRound;
+  const apiSettled = Number(S.status && S.status.builder && S.status.builder.anchor && S.status.builder.anchor.settledThroughRound) || 0;
+  setText('rNow', fmt(round)); setText('rEnd', hhmm((g + round * d) * 1000)); setText('rSettled', fmt(S.deployed && S.settled ? S.settled : apiSettled));
+  setText('rRpm', run && m ? `${(Number(m.rpmMilli) / 1000).toFixed(0)} rpm` : '');
+  renderWallet(); renderPet(round, run); renderBoard(); renderFeed();
+  $('links').innerHTML = '';
+  if (S.deployed) { const a = document.createElement('a'); a.href = scan('address', WHEELINGS); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Wheelings ' + short(WHEELINGS); $('links').append('Contract: ', a); }
+  else $('links').textContent = 'Contract: not deployed yet';
+}
+function setArt(src, alt){ const art = $('petArt'); const k = (src || '') + '|' + alt; if (art.dataset.k === k) return; art.dataset.k = k;
+  art.innerHTML = ''; if (src) { const im = document.createElement('img'); im.alt = alt; im.src = src; art.appendChild(im); } else { const d = document.createElement('div'); d.className = 'ph'; d.textContent = alt; art.appendChild(d); } }
+function renderPet(round, run){
+  const p = S.me; const art = $('petArt');
+  const left = Math.max(0, (S.genesis || 1793022600) + round * (S.dur || 600) - Date.now() / 1000);
+  const sig = JSON.stringify([p, round, run, S.busy, Wal.addr, S.deployed, S.settled, S.board[0] && S.board[0].id, p && S.art.get(p.id) ? S.art.get(p.id).length : 0, S.board[0] && S.art.has(S.board[0].id)]);
+  const act = $('actions'); const hint = $('cheerHint'); const q = $('queue');
+  if (act.dataset.sig === sig) { const c = $('countdown'); if (c) c.textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`; return; }
+  act.dataset.sig = sig; act.innerHTML = ''; q.innerHTML = '';
+  const btn = (t, f, cls, dis) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn' + (cls ? ' ' + cls : ''); b.textContent = t; b.disabled = !!dis || S.busy; b.addEventListener('click', f); act.appendChild(b); return b; };
+  if (!p) {
+    $('petBody').hidden = true; art.classList.remove('cheering');
+    const src = S.board[0] && S.art.get(S.board[0].id);
+    setArt(src, src ? 'The top Wheeling on the board' : 'Your Wheeling appears here.');
+    setText('petEyebrow', src ? 'The board leader' : 'Your pet'); setText('petName', 'No Wheeling yet');
+    setText('petSub', !Wal.addr ? "Connect a wallet to adopt one. It's free on Sepolia, one per wallet, and it stays with you." : !S.deployed ? 'Adoption opens when the contract is live.' : 'Adopt yours: free, one per wallet. It hatches the first time you cheer a round the wheel turns in.');
+    if (Wal.addr && S.deployed) btn('Adopt your Wheeling', () => sendTx(SEL.adopt, 'Adoption'), 'primary big');
+    hint.textContent = ''; return;
+  }
+  const src = S.art.get(p.id); setArt(src, src ? `Wheeling #${p.id}, ${STAGES[p.stage]}, ${MOODS[p.mood]}` : 'Drawing…');
+  setText('petEyebrow', `Wheeling #${p.id}${p.golden ? ' · golden collar' : ''} · born in round ${fmt(p.born)}`);
+  setText('petName', `${STAGES[p.stage]} · ${MOODS[p.mood]}`);
+  setText('petSub', p.stage === 0 ? 'Still an egg. Cheer a round while Squeektoshi runs and it hatches.' : p.mood === 2 ? 'Sleepy: no cheer for three days. Cheer a round to wake it up.' : p.mood === 1 ? 'Hungry: no cheer for a day.' : 'Happy and growing.');
+  $('petBody').hidden = false;
+  setText('sXp', fmt(p.xp)); setText('sStreak', fmt(p.streak)); setText('sBest', fmt(p.bestStreak)); setText('sHits', fmt(p.hits)); setText('sNaps', fmt(p.naps));
+  const lo = p.stage === 0 ? 0 : NEXT[p.stage - 1], hi = NEXT[p.stage];
+  const pct = hi === Infinity ? 100 : Math.max(0, Math.min(100, 100 * (p.xp - lo) / (hi - lo)));
+  $('xpFill').style.width = pct.toFixed(1) + '%'; $('xpBar').setAttribute('aria-valuenow', String(Math.round(pct)));
+  setText('nextTxt', hi === Infinity ? 'Legend: the top stage' : `${fmt(hi - p.xp)} XP to ${STAGES[p.stage + 1]}`);
+  const cheeredNow = p.lastCheer >= round; const ready = p.pending.filter(r => r <= S.settled).length;
+  art.classList.toggle('cheering', cheeredNow);
+  const mine = Wal.addr && p.owner.toLowerCase() === Wal.addr.toLowerCase();
+  if (mine) {
+    btn(cheeredNow ? `Cheered round ${fmt(round)} ✓` : `Cheer now · round ${fmt(round)}`, () => sendTx(SEL.cheer + pad(p.id), 'Cheer'), 'primary big', cheeredNow || p.pending.length >= 24 && !ready);
+    if (ready) btn(`Score ${ready} settled round${ready > 1 ? 's' : ''}`, () => sendTx(SEL.resolve + pad(p.id), 'Scoring'));
+    if (p.pending.length && p.pending[0] + 144 <= S.settled) btn(`Give up round ${fmt(p.pending[0])}`, () => sendTx(SEL.drop + pad(p.id), 'Dropping'));
+  }
+  hint.innerHTML = '';
+  const b = document.createElement('b');
+  if (cheeredNow) { b.textContent = 'Cheered.'; const c = document.createElement('span'); c.id = 'countdown'; c.textContent = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`; hint.append(b, ' Next round in ', c, `. It scores once SqueekCore settles it on Sepolia${S.settled ? ` (settled through round ${fmt(S.settled)} right now; settlement comes in batches)` : ''}.`); }
+  else if (run) { b.textContent = 'Squeektoshi is running!'; hint.append(b, ' Cheer this round: if the wheel keeps turning, your pet grows by the round\'s real work.'); }
+  else { b.textContent = 'He\'s resting.'; hint.append(b, ' A cheer now will most likely score a nap. He usually runs around 21:00 to 07:00 UTC.'); }
+  for (const r of p.pending) { const li = document.createElement('li'); li.className = 'badge ' + (r <= S.settled ? 'ok' : 'warn'); li.textContent = `round ${fmt(r)} · ${r <= S.settled ? 'settled, ready to score' : 'waiting for settlement'}`; q.appendChild(li); }
+}
+function renderBoard(){
+  const tb = $('board'); const sig = S.board.map(p => [p.id, p.xp, p.stage, p.mood, p.bestStreak, p.hits, S.art.has(p.id)].join(':')).join('|') + '|' + (Wal.addr || '') + S.deployed;
+  if (tb.dataset.sig === sig) return; tb.dataset.sig = sig; tb.innerHTML = '';
+  setText('boardCount', S.deployed ? `${fmt(S.supply)} Wheeling${S.supply === 1 ? '' : 's'} adopted` : '');
+  if (!S.board.length) { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 8; td.className = 'sub'; td.textContent = S.deployed ? 'No Wheelings yet. Be the first to adopt one.' : 'The board opens when the contract is live.'; tr.appendChild(td); tb.appendChild(tr); return; }
+  S.board.slice(0, 100).forEach((p, i) => {
+    const tr = document.createElement('tr'); if (Wal.addr && p.owner.toLowerCase() === Wal.addr.toLowerCase()) tr.className = 'me';
+    const td = (t, cls) => { const e = document.createElement('td'); if (cls) e.className = cls; if (t instanceof Node) e.appendChild(t); else e.textContent = t; tr.appendChild(e); return e; };
+    td(String(i + 1));
+    const src = S.art.get(p.id); if (src) { const im = document.createElement('img'); im.className = 'thumb'; im.alt = ''; im.src = src; im.loading = 'lazy'; td(im); } else td('');
+    td(`#${p.id}${p.golden ? ' ✦' : ''}`);
+    const a = document.createElement('a'); a.href = scan('address', p.owner); a.target = '_blank'; a.rel = 'noopener'; a.textContent = short(p.owner); td(a);
+    td(`${STAGES[p.stage]} · ${MOODS[p.mood]}`); td(fmt(p.xp), 'num'); td(fmt(p.bestStreak), 'num'); td(fmt(p.hits), 'num');
+    tb.appendChild(tr);
+  });
+}
+function renderFeed(){
+  const ul = $('feed'); const sig = S.feed.map(f => f.tx + f.id + f.round).join('|') + S.deployed + S.feedErr; if (ul.dataset.sig === sig) return; ul.dataset.sig = sig; ul.innerHTML = '';
+  if (!S.feed.length) { const li = document.createElement('li'); li.className = 'sub'; li.textContent = S.feedErr ? "Couldn't load the contract's events right now; retrying." : S.deployed ? 'No rounds scored yet.' : 'Scored rounds appear here once the contract is live.'; ul.appendChild(li); return; }
+  for (const f of S.feed) { const li = document.createElement('li'); const s = document.createElement('span');
+    s.textContent = f.work > 0 ? `Wheeling #${f.id} · round ${fmt(f.round)}: he ran ${fmt(f.work)} work → +${fmt(f.xp)} XP${f.streak > 1 ? ` (streak ${f.streak})` : ''}` : `Wheeling #${f.id} · round ${fmt(f.round)}: a nap, no XP`;
+    const a = document.createElement('a'); a.className = 't'; a.href = scan('tx', f.tx); a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'tx ↗'; li.append(s, a); ul.appendChild(li); }
+}
+
+/* ---------- polling ---------- */
+let inFlight = false, again = false;
+async function refresh(){
+  if (inFlight) { again = true; render(); return; } inFlight = true;
+  try { do { again = false; try { await loadChain(); } catch {} render(); } while (again); } finally { inFlight = false; }
+}
+async function boot(){
+  render();
+  try { await loadStatus(); } catch { S.statusErr++; } render();
+  try { S.deployed = await checkDeployed(); } catch { S.deployed = false; }
+  await refresh();
+  try { await loadBoard(); } catch {} render();
+  try { await loadFeed(); } catch {} render();
+  setInterval(async () => { try { await loadStatus(); S.statusErr = 0; } catch { S.statusErr++; } render(); }, 10000);
+  setInterval(refresh, 20000);
+  setInterval(async () => { try { await loadBoard(); await loadFeed(); } catch {} render(); }, 60000);
+  setInterval(render, 1000);
+}
+window.__wl = { S, Wal, decodePet, decodePets, decodeString, SEL };
+boot();
+})();
+</script>
+</body>
+</html>

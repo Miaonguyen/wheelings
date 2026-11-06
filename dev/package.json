@@ -1,0 +1,3 @@
+{ "name": "wheelings-dev", "private": true,
+  "scripts": { "compile": "node compile.js", "test": "node compile.js && hardhat run --no-compile test/run.js", "release": "node release.js" },
+  "dependencies": { "ethers": "6.13.4", "hardhat": "2.22.17", "solc": "0.8.26", "playwright": "1.48.2" } }

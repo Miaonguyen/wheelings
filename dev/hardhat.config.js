@@ -1,0 +1,1 @@
+module.exports = { networks: { hardhat: Object.assign({ hardfork: 'cancun', allowUnlimitedContractSize: false, chainId: 31337 }, process.env.NODE_REALTIME ? {} : { initialDate: '2026-11-05T12:00:00Z' }) } };
